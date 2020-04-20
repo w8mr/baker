@@ -40,4 +40,3 @@ steps:
 
   - script: sbt -Divy.home=${IVY_HOME} -Dsbt.ivy.home=${IVY_HOME} clean test aetherDeploy
     displayName: 'Running sbt'
-
