@@ -87,23 +87,11 @@ spec:
             configMapMounts:
               type: array
               items:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  mountPath:
-                    type: string
-                required: ["name", "mountPath"]
+                type: string
             secretMounts:
               type: array
               items:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  mountPath:
-                    type: string
-                required: ["name", "mountPath"]
+                type: string
           required:
             - image
   # either Namespaced or Cluster

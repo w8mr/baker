@@ -40,7 +40,7 @@ val commonSettings = Defaults.coreDefaultSettings ++ Seq(
     s"-target:jvm-$jvmV",
     "-Xfatal-warnings"
   ),
-  coverageExcludedPackages := "<empty>;.*.javadsl;.*.scaladsl;.*.common;.*.protobuf",
+  coverageExcludedPackages := "<empty>;.*javadsl.*;.*scaladsl.*;.*common.*;.*protobuf.*;.*Main.*",
   packageOptions in(Compile, packageBin) +=
     Package.ManifestAttributes(
       "Build-Time" -> new java.util.Date().toString,
@@ -129,7 +129,8 @@ lazy val runtime = project.in(file("runtime"))
         akkaCluster,
         akkaClusterTools,
         akkaClusterSharding,
-        akkaBoostrap,
+        akkaClusterBoostrap,
+        akkaDiscovery,
         akkaSlf4j,
         akkaInmemoryJournal,
         ficusConfig,
@@ -238,7 +239,11 @@ lazy val `baas-node-client` = project.in(file("baas-node-client"))
       http4sDsl,
       http4sClient,
       http4sCirce,
-      scalaLogging
+      scalaLogging,
+      http4sServer % "test",
+      slf4jApi % "test",
+      logback % "test",
+      scalaTest % "test"
     )
   )
   .dependsOn(`baker-interface`)
@@ -255,8 +260,11 @@ lazy val `baas-node-state` = project.in(file("baas-node-state"))
       akkaPersistenceCassandra,
       akkaManagementHttp,
       akkaClusterBoostrap,
+      akkaDiscovery,
       akkaDiscoveryKube,
       skuber,
+      play,
+      jackson,
       http4s,
       http4sDsl,
       http4sCirce,
@@ -272,6 +280,9 @@ lazy val `baas-node-state` = project.in(file("baas-node-state"))
       mockServer,
       circe,
       circeGeneric
+    ),
+    dependencyOverrides ++= Seq(
+      play
     )
   )
   .dependsOn(
@@ -337,6 +348,8 @@ lazy val `bakery-controller` = project.in(file("bakery-controller"))
       akkaSlf4j,
       scalaLogging,
       skuber,
+      play,
+      jackson,
       http4s,
       http4sDsl,
       http4sServer,
@@ -349,6 +362,9 @@ lazy val `bakery-controller` = project.in(file("bakery-controller"))
       mockServer,
       circe,
       circeGeneric
+    ),
+    dependencyOverrides ++= Seq(
+      play
     )
   )
   .dependsOn(bakertypes, recipeCompiler, recipeDsl, intermediateLanguage, `baas-node-client`, `baas-protocol-interaction-scheduling`)
@@ -381,7 +397,7 @@ lazy val `bakery-state-docker-generate` = project.in(file("docker/bakery-state-d
 
 lazy val baker = project.in(file("."))
   .settings(defaultModuleSettings)
-  .aggregate(bakertypes, runtime, recipeCompiler, recipeDsl, intermediateLanguage, splitBrainResolver,
+  .aggregate(bakertypes, runtime, recipeCompiler, recipeDsl, intermediateLanguage,
     `baas-node-client`, `baas-node-state`, `baas-node-interaction`, `baas-node-interaction-spring`, `baas-protocol-interaction-scheduling`,
     `sbt-baas-docker-generate`,
     `baker-interface`, `bakery-controller`)
@@ -559,7 +575,7 @@ lazy val `sbt-baas-docker-generate` = project.in(file("sbt-baas-docker-generate"
       Seq(file)
     }.taskValue,
     addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.6.0"),
-    addSbtPlugin("org.vaslabs.kube" % "sbt-kubeyml" % "0.3.4")
+    addSbtPlugin("org.vaslabs.kube" % "sbt-kubeyml" % "0.3.8")
   )
   .enablePlugins(SbtPlugin)
   .enablePlugins(baas.sbt.BuildInteractionDockerImageSBTPlugin)
