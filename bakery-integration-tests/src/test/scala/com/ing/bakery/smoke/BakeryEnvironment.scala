@@ -14,12 +14,14 @@ object BakeryEnvironment {
   case class Context(
     clientApp: ExampleAppClient,
     namespace: Namespace,
-    inspector: LogInspectionService.Inspector
+    inspector: LogInspectionService.Inspector,
+    skipSetupAndCleanup: Boolean
   )
 
   case class Arguments(
     clientAppHostname: Uri,
-    debugMode: Boolean
+    debugMode: Boolean,
+    skipSetupAndCleanup: Boolean
   )
 
   def configMapNamespace(implicit cs: ContextShift[IO], timer: Timer[IO]): Resource[IO, Namespace] =
@@ -59,7 +61,7 @@ object BakeryEnvironment {
   } yield namespace
 
   def resource(args: Arguments, namespaceSetup: => Resource[IO, Namespace])(implicit connectionPool: ExecutionContext, cs: ContextShift[IO], timer: Timer[IO]): Resource[IO, Context] = for {
-    namespace <- namespaceSetup
+    namespace <- if(args.skipSetupAndCleanup) Resource.pure[IO, Namespace](Namespace("default")) else namespaceSetup
     client <- BlazeClientBuilder[IO](connectionPool).resource
     exampleAppClient = new ExampleAppClient(client, args.clientAppHostname)
 
@@ -74,6 +76,7 @@ object BakeryEnvironment {
   } yield Context(
     clientApp = exampleAppClient,
     namespace,
-    inspector
+    inspector,
+    args.skipSetupAndCleanup
   )
 }

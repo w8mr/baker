@@ -7,7 +7,7 @@ import com.ing.bakery.smoke.prefixGreen
 
 case class Namespace(value: String) extends AnyVal {
 
-  def delete: IO[Unit] = {
+  def delete: IO[Unit] = if(value == "default") IO.unit else {
     val prefix = s"[${Console.CYAN}cleaning env $value${Console.RESET}]"
     KubernetesCommands.exec(
       prefix = prefix,

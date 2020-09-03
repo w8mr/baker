@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: baker-webshop-config
+data:
+  application.conf: |-
+    include "baker.conf"
+    include "cassandra.conf"
+    #include "secrets.conf"
+    akka {
+        loggers = ["akka.event.slf4j.Slf4jLogger"]
+        loglevel = "INFO"
+        logging-filter = "akka.event.slf4j.Slf4jLoggingFilter"
+        jvm-exit-on-fatal-error = false
+        log-config-on-start = off
+    }
+  cassandra.conf: >
+    akka.extensions = [akka.persistence.Persistence]
+
+    akka.persistence.journal.plugin = "cassandra-journal"
+
+    akka.persistence.journal.auto-start-journals = ["cassandra-journal"]
+
+    akka.persistence.snapshot-store.plugin = "cassandra-snapshot-store"
+
+    akka.persistence.snapshot-store.auto-start-snapshot-stores = ["cassandra-snapshot-store"]
+
+    baker.actor.read-journal-plugin = "cassandra-query-journal"
+
+    baker.journal-initialize-timeout = 30 seconds
+
+    baker.encryption.secret = "Q14KL0G93kLZWbCks3qBtzXmcdbIaw1k"
+
+    baker.encryption.enabled = on
+
+    cassandra-config = {
+      contact-points = [ cassandra-dc1-0.cassandra-dc1.default.svc.cluster.local ]
+      keyspace-autocreate = true
+      tables-autocreate = true
+      keyspace = bakery
+      cassandra-2x-compat = on
+      local-datacenter = DC1
+      log-queries = true
+      used-hosts-per-remote-dc = 5 // also connect to the cassandra nodes in the other data center
+      write-consistency = "LOCAL_QUORUM"
+      read-consistency = "LOCAL_QUORUM"
+      allow-remote-dcs-for-local-consistency = true
+      retryPolicy = "com.ing.akka.persistence.cassandra.retry.DowngradingConsistencyLevelRetryPolicy"
+
+      authentication.username = "cassandra"
+      authentication.password = "cassandra"
+
+      #galm {
+      #  cmdbName = "dnl-bakery"
+      #  environment = "TEST"
+      #}
+      // Governance is disabled for local testing against cassandra since we do not have the keyspace/tables
+      #governance {
+      #  application-name = "dnl-bakery"
+      #}
+
+      akka-state-listener {
+        // If this setting set to true, this node will terminate itself when all local cassandra nodes are down in one of the data centers.
+        // Data center with majority of the akka nodes whould set this to false,
+        // and the other data center with less nodes should set this to true.
+        terminate-if-one-dc-down = false
+      }
+      write-static-column-compat = on
+    }
+
+    cassandra-journal = ${cassandra-config} {
+      table = "messages"
+    }
+
+    cassandra-snapshot-store = ${cassandra-config} {
+      table = "snapshots"
+    }

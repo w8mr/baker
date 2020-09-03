@@ -24,9 +24,14 @@ abstract class BakerySmokeTests  extends BakeryFunSpec {
       case "yes" | "true" | "t" | "y" => true
       case _ => false
     }
+    val skipSetup = config.getOrElse("skipSetup", "false") match {
+      case "yes" | "true" | "t" | "y" => true
+      case _ => false
+    }
     BakeryEnvironment.Arguments(
       clientAppHostname = clientAppHostname,
-      debugMode = debugMode
+      debugMode = debugMode,
+      skipSetupAndCleanup = skipSetup
     )
   }
 

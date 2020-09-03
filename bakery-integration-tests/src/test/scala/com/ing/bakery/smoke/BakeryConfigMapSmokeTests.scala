@@ -12,10 +12,11 @@ class BakeryConfigMapSmokeTests extends BakerySmokeTests with Matchers {
 
     test("runs a happy path flow") { context =>
       for {
-        recipes <- context.clientApp.listRecipeNames
-        _ = recipes.length shouldBe 1
-        _ = recipes should contain("Webshop")
+        //recipes <- context.clientApp.listRecipeNames
+        //_ = recipes.length shouldBe 1
+        //_ = recipes should contain("Webshop")
 
+        /*
         _ <- DefinitionFile("configmap/baker-webshop-update-recipes.yaml", context.namespace)
         _ <- eventually("Webshop baker added an extra recipe") {
           for {
@@ -25,6 +26,7 @@ class BakeryConfigMapSmokeTests extends BakerySmokeTests with Matchers {
             _ = recipes should contain("ItemReservation")
           } yield ()
         }
+        */
 
         orderId <- context.clientApp.createCheckoutOrder(List("item1", "item2"))
 
@@ -54,6 +56,7 @@ class BakeryConfigMapSmokeTests extends BakerySmokeTests with Matchers {
             .map(status => status shouldBe OrderStatus.Complete.toString)
         }
 
+        /*
         recipeEvents <- Pod.execOnNamed("kafka-event-sink",
           context.namespace, Some("kafkacat"))(s"kafkacat -b localhost:9092 -C -t recipe-events -o 0 -c ${ExpectedRecipeEvents.size}")
 
@@ -69,6 +72,7 @@ class BakeryConfigMapSmokeTests extends BakerySmokeTests with Matchers {
           .map(_.toOption.get.asObject.get.keys.head) shouldBe ExpectedBakerEvents
 
         _ <- printGreen(s"Event streams contain all required events")
+         */
       } yield succeed
     }
   }
