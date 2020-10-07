@@ -61,6 +61,7 @@ object Dependencies {
 
   val kamon = "io.kamon" %% "kamon-bundle" % kamonAkkaVersion
   val kamonAkka = "io.kamon" %% "kamon-akka" % kamonAkkaVersion
+  val kamonAkkaRemote = "io.kamon" %% "kamon-akka-remote" % kamonAkkaVersion
   val kamonPrometheus = "io.kamon" %% "kamon-prometheus" % kamonAkkaVersion
 
   val skuber = ("io.skuber" %% "skuber" % "2.6.0")

@@ -252,8 +252,8 @@ lazy val `bakery-baker` = project.in(file("bakery/baker"))
       http4sCirce,
       http4sServer,
       scalaKafkaClient,
-      kamon,
       kamonAkka,
+      kamonAkkaRemote,
       kamonPrometheus
     ) ++ testDeps(
       slf4jApi,
