@@ -401,7 +401,7 @@ lazy val `bakery-interaction-spring` = project.in(file("bakery/interaction-sprin
 
 lazy val baker = project.in(file("."))
   .settings(defaultModuleSettings)
-  .aggregate(`baker-types`, `baker-akka-runtime`, `baker-recipe-compiler`, `baker-recipe-dsl`, `baker-intermediate-language`,
+  .aggregate(`baker-types`, `baker-akka-runtime`, `baker-recipe-compiler`, `baker-recipe-dsl`, `baker-annotations` , `baker-intermediate-language`,
     `bakery-client`, `bakery-state`, `bakery-interaction`, `bakery-interaction-spring`, `bakery-interaction-protocol`,
     `sbt-bakery-docker-generate`,
     `baker-interface`, `bakery-dashboard`)
