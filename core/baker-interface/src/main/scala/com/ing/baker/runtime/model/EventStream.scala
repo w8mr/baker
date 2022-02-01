@@ -1,6 +1,6 @@
 package com.ing.baker.runtime.model
 
-import cats.effect.{Effect, IO}
+import cats.effect.{Effect, IO, Sync}
 import cats.implicits._
 import com.ing.baker.runtime.scaladsl.BakerEvent
 
@@ -10,7 +10,7 @@ trait EventStream[F[_]] {
 
   def subscribe(listenerFunction: BakerEvent => Unit): F[Unit]
 
-  def publish(event: BakerEvent)(implicit components: BakerComponents[F], effect: Effect[F]): F[Unit] = {
+  def publish(event: BakerEvent)(implicit components: BakerComponents[F], effect: Sync[F]): F[Unit] = {
     for {
       listeners <- fetchListeners
       _ <- listeners.traverse { listener =>

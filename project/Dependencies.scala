@@ -7,11 +7,11 @@ object Dependencies {
   val akkaManagementVersion = "1.1.3"
   val akkaPersistenceCassandraVersion = "1.0.5"
   val akkaHttpVersion = "10.2.7"
-  val http4sVersion = "0.21.31"
-  val fs2Version = "2.5.10"
-  val circeVersion = "0.14.0"
+  val http4sVersion = "0.23.7"
+  val fs2Version = "3.2.4"
+  val circeVersion = "0.14.1"
   val mockitoScalaVersion = "1.16.55"
-  val catsEffectVersion = "2.5.4"
+  val catsEffectVersion = "3.3.4"
   val catsCoreVersion = "2.7.0"
   val scalapbVersion = scalapb.compiler.Version.scalapbVersion
   val springVersion = "5.3.15"
@@ -57,7 +57,7 @@ object Dependencies {
   val kafkaClient = "org.apache.kafka" % "kafka-clients" % "3.1.0"
   val fs2Core = "co.fs2" %% "fs2-core" % fs2Version
   val fs2Io = "co.fs2" %% "fs2-io" % fs2Version
-  val fs2kafka = "com.github.fd4s" %% "fs2-kafka" % "1.0.0"
+  val fs2kafka = "com.github.fd4s" %% "fs2-kafka" % "2.2.0"
   val levelDB = "org.iq80.leveldb" % "leveldb" % "0.12"
 
   val levelDBJni = "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8"
@@ -93,10 +93,10 @@ object Dependencies {
 
   val catsEffect = "org.typelevel" %% "cats-effect" % catsEffectVersion
   val catsCore = "org.typelevel" %% "cats-core" % catsCoreVersion
-  val console4Cats = "dev.profunktor" %% "console4cats" % "0.8.0"
-  val catsRetry = "com.github.cb372" %% "cats-retry" % "2.1.1"
+  val console4Cats = "dev.profunktor" %% "console4cats" % "0.8.1"
+  val catsRetry = "com.github.cb372" %% "cats-retry" % "3.1.0"
 
-  val jnrConstants = "com.github.jnr" % "jnr-constants" % "0.9.9"
+  val jnrConstants = "com.github.jnr" % "jnr-constants" % "0.10.3"
 
   def scalaReflect(scalaV: String): ModuleID = "org.scala-lang" % "scala-reflect" % scalaV
 
