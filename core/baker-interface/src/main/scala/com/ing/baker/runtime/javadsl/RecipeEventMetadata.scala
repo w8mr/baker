@@ -1,12 +1,13 @@
 package com.ing.baker.runtime.javadsl
 
+import com.ing.baker.il.CompiledRecipeId
 import com.ing.baker.runtime.common
 import com.ing.baker.runtime.scaladsl
 import com.ing.baker.runtime.common.LanguageDataStructures.JavaApi
 
-case class RecipeEventMetadata(recipeId: String, recipeName: String, recipeInstanceId: String) extends common.RecipeEventMetadata with JavaApi {
+case class RecipeEventMetadata(recipeId: CompiledRecipeId, recipeName: String, recipeInstanceId: String) extends common.RecipeEventMetadata with JavaApi {
 
-  def getRecipeId: String = recipeId
+  def getRecipeId: CompiledRecipeId = recipeId
 
   def getRecipeName: String = recipeName
 

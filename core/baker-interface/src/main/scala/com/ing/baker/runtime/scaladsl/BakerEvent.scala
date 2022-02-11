@@ -2,8 +2,7 @@ package com.ing.baker.runtime.scaladsl
 
 
 import java.util.Optional
-
-import com.ing.baker.il.CompiledRecipe
+import com.ing.baker.il.{CompiledRecipe, CompiledRecipeId}
 import com.ing.baker.il.failurestrategy.ExceptionStrategyOutcome
 import com.ing.baker.runtime.common.LanguageDataStructures.ScalaApi
 import com.ing.baker.runtime.common.RejectReason
@@ -42,10 +41,10 @@ sealed trait BakerEvent extends common.BakerEvent with ScalaApi {
   */
 case class EventReceived(timeStamp: Long,
                          recipeName: String,
-                         recipeId: String,
+                         recipeId: CompiledRecipeId,
                          recipeInstanceId: String,
                          correlationId: Option[String],
-                         event: EventInstance) extends BakerEvent with common.EventReceived
+                         event: EventInstance) extends BakerEvent with common.EventReceived with ContainsCompiledRecipeId
 
 /**
   * Event describing the fact that an event was received but rejected for a process
@@ -77,12 +76,12 @@ case class EventRejected(timeStamp: Long,
 case class InteractionFailed(timeStamp: Long,
                              duration: Long,
                              recipeName: String,
-                             recipeId: String,
+                             recipeId: CompiledRecipeId,
                              recipeInstanceId: String,
                              interactionName: String,
                              failureCount: Int,
                              throwable: Throwable,
-                             exceptionStrategyOutcome: ExceptionStrategyOutcome) extends BakerEvent with common.InteractionFailed
+                             exceptionStrategyOutcome: ExceptionStrategyOutcome) extends BakerEvent with common.InteractionFailed with ContainsCompiledRecipeId
 
 /**
   * Event describing the fact that an interaction has started executing
@@ -95,9 +94,9 @@ case class InteractionFailed(timeStamp: Long,
   */
 case class InteractionStarted(timeStamp: Long,
                               recipeName: String,
-                              recipeId: String,
+                              recipeId: CompiledRecipeId,
                               recipeInstanceId: String,
-                              interactionName: String) extends BakerEvent with common.InteractionStarted
+                              interactionName: String) extends BakerEvent with common.InteractionStarted with ContainsCompiledRecipeId
 
 /**
   * Event describing the fact that an interaction was executed successfully
@@ -114,10 +113,10 @@ case class InteractionStarted(timeStamp: Long,
 case class InteractionCompleted(timeStamp: Long,
                                 duration: Long,
                                 recipeName: String,
-                                recipeId: String,
+                                recipeId: CompiledRecipeId,
                                 recipeInstanceId: String,
                                 interactionName: String,
-                                event: Option[EventInstance]) extends BakerEvent with common.InteractionCompleted
+                                event: Option[EventInstance]) extends BakerEvent with common.InteractionCompleted with ContainsCompiledRecipeId
 
 /**
   * Event describing the fact that a baker process was created
@@ -128,9 +127,9 @@ case class InteractionCompleted(timeStamp: Long,
   * @param recipeInstanceId The process id
   */
 case class RecipeInstanceCreated(timeStamp: Long,
-                                 recipeId: String,
+                                 recipeId: CompiledRecipeId,
                                  recipeName: String,
-                                 recipeInstanceId: String) extends BakerEvent with common.RecipeInstanceCreated
+                                 recipeInstanceId: String) extends BakerEvent with common.RecipeInstanceCreated with ContainsCompiledRecipeId
 
 /**
   * An event describing the fact that a recipe was added to baker.
@@ -140,7 +139,10 @@ case class RecipeInstanceCreated(timeStamp: Long,
   * @param date The time the recipe was added to baker
   */
 case class RecipeAdded(recipeName: String,
-                       recipeId: String,
+                       recipeId: CompiledRecipeId,
                        date: Long,
-                       compiledRecipe: CompiledRecipe) extends BakerEvent with common.RecipeAdded
+                       compiledRecipe: CompiledRecipe) extends BakerEvent with common.RecipeAdded with ContainsCompiledRecipeId
 
+trait ContainsCompiledRecipeId {
+  def recipeId: CompiledRecipeId
+}

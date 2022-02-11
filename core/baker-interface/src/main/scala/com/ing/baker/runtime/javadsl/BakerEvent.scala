@@ -1,8 +1,7 @@
 package com.ing.baker.runtime.javadsl
 
 import java.util.Optional
-
-import com.ing.baker.il.CompiledRecipe
+import com.ing.baker.il.{CompiledRecipe, CompiledRecipeId}
 import com.ing.baker.il.failurestrategy.ExceptionStrategyOutcome
 import com.ing.baker.runtime.common
 import com.ing.baker.runtime.common.LanguageDataStructures.JavaApi
@@ -28,7 +27,7 @@ sealed trait BakerEvent extends common.BakerEvent with JavaApi {
   */
 case class EventReceived(timeStamp: Long,
                          recipeName: String,
-                         recipeId: String,
+                         recipeId: CompiledRecipeId,
                          recipeInstanceId: String,
                          correlationId: Optional[String],
                          event: EventInstance) extends BakerEvent with common.EventReceived {
@@ -37,7 +36,7 @@ case class EventReceived(timeStamp: Long,
 
   def getRecipeName: String = recipeName
 
-  def getRecipeId: String = recipeId
+  def getRecipeId: CompiledRecipeId = recipeId
 
   def getRecipeInstanceId: String = recipeInstanceId
 
@@ -87,7 +86,7 @@ case class EventRejected(timeStamp: Long,
 case class InteractionFailed(timeStamp: Long,
                              duration: Long,
                              recipeName: String,
-                             recipeId: String,
+                             recipeId: CompiledRecipeId,
                              recipeInstanceId: String,
                              interactionName: String,
                              failureCount: Int,
@@ -100,7 +99,7 @@ case class InteractionFailed(timeStamp: Long,
 
   def getRecipeName: String = recipeName
 
-  def getRecipeId: String = recipeId
+  def getRecipeId: CompiledRecipeId = recipeId
 
   def getRecipeInstanceId: String = recipeInstanceId
 
@@ -124,7 +123,7 @@ case class InteractionFailed(timeStamp: Long,
   */
 case class InteractionStarted(timeStamp: Long,
                               recipeName: String,
-                              recipeId: String,
+                              recipeId: CompiledRecipeId,
                               recipeInstanceId: String,
                               interactionName: String) extends BakerEvent with common.InteractionStarted {
 
@@ -132,7 +131,7 @@ case class InteractionStarted(timeStamp: Long,
 
   def getRecipeName: String = recipeName
 
-  def getRecipeId: String = recipeId
+  def getRecipeId: CompiledRecipeId = recipeId
 
   def getRecipeInstanceId: String = recipeInstanceId
 
@@ -154,7 +153,7 @@ case class InteractionStarted(timeStamp: Long,
 case class InteractionCompleted(timeStamp: Long,
                                 duration: Long,
                                 recipeName: String,
-                                recipeId: String,
+                                recipeId: CompiledRecipeId,
                                 recipeInstanceId: String,
                                 interactionName: String,
                                 event: Optional[EventInstance]) extends BakerEvent with common.InteractionCompleted {
@@ -165,7 +164,7 @@ case class InteractionCompleted(timeStamp: Long,
 
   def getRecipeName: String = recipeName
 
-  def getRecipeId: String = recipeId
+  def getRecipeId: CompiledRecipeId = recipeId
 
   def getRecipeInstanceId: String = recipeInstanceId
 
@@ -183,13 +182,13 @@ case class InteractionCompleted(timeStamp: Long,
   * @param recipeInstanceId The process id
   */
 case class RecipeInstanceCreated(timeStamp: Long,
-                                 recipeId: String,
+                                 recipeId: CompiledRecipeId,
                                  recipeName: String,
                                  recipeInstanceId: String) extends BakerEvent with common.RecipeInstanceCreated {
 
   def getTimeStamp: Long = timeStamp
 
-  def getRecipeId: String = recipeId
+  def getRecipeId: CompiledRecipeId = recipeId
 
   def getRecipeName: String = recipeName
 
@@ -204,13 +203,13 @@ case class RecipeInstanceCreated(timeStamp: Long,
   * @param date The time the recipe was added to baker
   */
 case class RecipeAdded(recipeName: String,
-                       recipeId: String,
+                       recipeId: CompiledRecipeId,
                        date: Long,
                        compiledRecipe: CompiledRecipe) extends BakerEvent with common.RecipeAdded {
 
   def getRecipeName: String = recipeName
 
-  def getRecipeId: String = recipeId
+  def getRecipeId: CompiledRecipeId = recipeId
 
   def getData: Long = date
 

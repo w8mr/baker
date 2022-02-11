@@ -1,5 +1,6 @@
 package com.ing.baker.runtime.common
 
+import com.ing.baker.il.CompiledRecipeId
 import com.ing.baker.runtime.common.LanguageDataStructures.LanguageApi
 
 /**
@@ -7,7 +8,7 @@ import com.ing.baker.runtime.common.LanguageDataStructures.LanguageApi
   */
 trait RecipeInstanceMetadata extends LanguageApi {
 
-  val recipeId: String
+  val recipeId: CompiledRecipeId
 
   val recipeInstanceId: String
 

@@ -1,11 +1,10 @@
 package com.ing.baker.il.petrinet
 
 import com.ing.baker.il
-import com.ing.baker.il.CompiledRecipe.RecipeIdVariant
+import com.ing.baker.il.CompiledRecipeId.{RecipeIdVariant, ToRecipeIdStringHelper}
 import com.ing.baker.il.failurestrategy.InteractionFailureStrategy
 import com.ing.baker.il.{EventOutputTransformer, _}
 import com.ing.baker.types.Value
-import org.slf4j._
 
 import scala.collection.immutable.Seq
 

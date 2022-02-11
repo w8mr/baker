@@ -1,8 +1,7 @@
 package com.ing.baker.runtime.serialization
 
 import java.util.Base64
-
-import com.ing.baker.il.CompiledRecipe
+import com.ing.baker.il.{CompiledRecipe, CompiledRecipeId}
 import com.ing.baker.il.failurestrategy.ExceptionStrategyOutcome
 import com.ing.baker.petrinet.api.{Marking, PetriNet}
 import com.ing.baker.runtime.common.{BakerException, RejectReason, SensoryEventStatus}
@@ -78,14 +77,31 @@ object JsonDecoders extends LazyLogging {
   implicit val exceptionDecoder: Decoder[ExceptionStrategyOutcome] = deriveDecoder[ExceptionStrategyOutcome]
   implicit val throwableDecoder: Decoder[Throwable] = decodeString.map(new RuntimeException(_))
 
+  private def decodeRecipeId(recipeIdV1: Option[String], recipeIdV2: Option[String]) : Result[CompiledRecipeId] =
+    CompiledRecipeId.build(recipeIdV1, recipeIdV2).map(compiledRecipeId =>
+      Right(compiledRecipeId)
+    ).getOrElse(
+      Left(DecodingFailure("No recipe id found.", List(DownField("recipeId"), DownField("recipeIdV2"))))
+    )
+
+  implicit val compiledRecipeIdBothDecoder: Decoder[CompiledRecipeId] = (c : HCursor) => {
+    for {
+      recipeIdV1 <- c.up.downField("recipeId").as[Option[String]]
+      recipeIdV2 <- c.up.downField("recipeIdV2").as[Option[String]]
+      recipeId <- decodeRecipeId(recipeIdV1, recipeIdV2)
+    } yield recipeId
+  }
+
   implicit val compiledRecipeDecoder: Decoder[CompiledRecipe] = (c: HCursor) => {
     for {
       name <- c.downField("name").as[String]
-      recipeId <- c.downField("recipeId").as[String]
+      recipeIdV1 <- c.downField("recipeId").as[Option[String]]
+      recipeIdV2 <- c.downField("recipeIdV2").as[Option[String]]
       validationErrors <- c.downField("validationErrors").as[List[String]]
+      compiledRecipeId <- decodeRecipeId(recipeIdV1, recipeIdV2)
     } yield {
+        CompiledRecipe(name, compiledRecipeId, new PetriNet(Graph.empty), Marking.empty, validationErrors, Option.empty, Option.empty)
       // TODO: read PetriNet and Marking from json
-      CompiledRecipe(name, recipeId, new PetriNet(Graph.empty), Marking.empty, validationErrors, Option.empty, Option.empty)
     }
   }
   implicit val eventInstanceDecoder: Decoder[EventInstance] = deriveDecoder[EventInstance]

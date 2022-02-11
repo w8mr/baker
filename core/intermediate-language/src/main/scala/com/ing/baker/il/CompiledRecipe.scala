@@ -1,6 +1,6 @@
 package com.ing.baker.il
 
-import com.ing.baker.il.CompiledRecipe.{RecipeIdVariant, Scala212CompatibleJava}
+import com.ing.baker.il.CompiledRecipeId.Version1
 import com.ing.baker.il.petrinet.{EventTransition, InteractionTransition, Place, RecipePetriNet}
 import com.ing.baker.petrinet.api.Marking
 
@@ -10,54 +10,10 @@ import scala.concurrent.duration.FiniteDuration
 
 object CompiledRecipe {
 
-  sealed trait RecipeIdVariant
-  sealed trait OldRecipeIdVariant extends RecipeIdVariant
-  case object Scala212CompatibleJava extends OldRecipeIdVariant
-  case object Scala212CompatibleScala extends OldRecipeIdVariant
-  case object Improved extends RecipeIdVariant
-
   def build(name: String, petriNet: RecipePetriNet, initialMarking: Marking[Place], validationErrors: Seq[String],
-            eventReceivePeriod: Option[FiniteDuration], retentionPeriod: Option[FiniteDuration], oldRecipeIdVariant: OldRecipeIdVariant): CompiledRecipe = {
-    /**
-      * This calculates a SHA-256 hash for a deterministic string representation of the recipe.
-      *
-      * For the purpose of data integrity it is enough to truncate to 64 bits:
-      *
-      * - It is acceptable to truncate in SHA-2 hashes (SHA384 is officially defined as a truncated SHA512)
-      *
-      * - According to the Birthday Problem, as long as the number of keys is significantly less then 2 32
-      * then you need not worry about collisions.
-      *
-      * Also see the collision table at: https://en.wikipedia.org/wiki/Birthday_attack
-      *
-      * For example, there is a 1 in a million change of collision when number of recipes reach 6 million
-      */
-    def calculateRecipeId(variant: RecipeIdVariant): String = {
-      val petriNetId: String = petriNet.places.toList.sortBy(_.id).mkString +
-        petriNet.transitions.toList.sortBy(_.id).mapRecipeIdStrings(variant).mkString
+            eventReceivePeriod: Option[FiniteDuration], retentionPeriod: Option[FiniteDuration], oldRecipeIdVariant: Option[Version1] = None): CompiledRecipe = {
 
-      val initMarkingId: String = initialMarking.toList.sortBy {
-        case (place, _) => place.id
-      }.map {
-        case (_, tokens) => tokens.toList.sortBy {
-          case (tokenData: String, _) => tokenData
-          case _ => throw new UnsupportedOperationException("Only string tokens are supported")
-        }
-      }.toString
-
-      val recipeString = StringBuilder.newBuilder +
-        name +
-        petriNetId +
-        initMarkingId +
-        validationErrors.mkString +
-        eventReceivePeriod.toString + retentionPeriod
-
-      // truncate to 64 bits = 16 hex chars
-      zeroPaddedSHA256(recipeString).substring(0, 16)
-    }
-
-    // the recipe id is a hexadecimal format of the hashcode
-    val recipeId = calculateRecipeId(oldRecipeIdVariant)
+    val recipeId = CompiledRecipeId.calculate(name, petriNet, initialMarking, validationErrors, eventReceivePeriod, retentionPeriod, oldRecipeIdVariant)
     CompiledRecipe(name, recipeId, petriNet, initialMarking, validationErrors, eventReceivePeriod, retentionPeriod)
   }
 }
@@ -67,7 +23,7 @@ object CompiledRecipe {
   */
 
 case class CompiledRecipe(name: String,
-                          recipeId: String,
+                          recipeId: CompiledRecipeId,
                           petriNet: RecipePetriNet,
                           initialMarking: Marking[Place],
                           validationErrors: Seq[String] = Seq.empty,

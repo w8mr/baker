@@ -1,8 +1,7 @@
 package com.ing.baker.runtime.serialization
 
 import java.util.Base64
-
-import com.ing.baker.il.CompiledRecipe
+import com.ing.baker.il.{BackwardsCompatibleRecipeId, CompiledRecipe, CompiledRecipeId, SingleVersionRecipeId}
 import com.ing.baker.il.failurestrategy.ExceptionStrategyOutcome
 import com.ing.baker.runtime.common.{BakerException, RejectReason, SensoryEventStatus}
 import com.ing.baker.runtime.scaladsl._
@@ -59,15 +58,51 @@ object JsonEncoders {
   implicit val rejectReasonEncoder: Encoder[RejectReason] = encodeString.contramap(_.toString)
   implicit val exceptionEncoder: Encoder[ExceptionStrategyOutcome] = deriveEncoder[ExceptionStrategyOutcome]
   implicit val throwableEncoder: Encoder[Throwable] = (throwable: Throwable) => Json.obj(("error", Json.fromString(throwable.getMessage)))
+
+  implicit val singleVersionRecipeIdEncoder : Encoder[SingleVersionRecipeId] = Encoder.encodeString.contramap(_.value)
+
+  private def encodeRecipeIdMergeObject(compiledRecipeId: CompiledRecipeId) : Json = compiledRecipeId match {
+    case BackwardsCompatibleRecipeId(recipeIdV1, recipeIdV2) =>
+      Json.obj(
+        "recipeId" -> recipeIdV1.asJson,
+        "recipeIdV2" -> recipeIdV2.asJson,
+      )
+    case SingleVersionRecipeId(value) =>
+      Json.obj(
+        "recipeId" -> value.asJson,
+      )
+  }
+
   implicit val compiledRecipeEncoder: Encoder[CompiledRecipe] =
   // TODO: write PetriNet and Marking to json
     (recipe: CompiledRecipe) => Json.obj(
       "name" -> recipe.name.asJson,
-      "recipeId" -> recipe.recipeId.asJson,
       "validationErrors" -> recipe.getValidationErrors.asScala.asJson
-    )
+    ).deepMerge(encodeRecipeIdMergeObject(recipe.recipeId))
 
-  implicit val bakerEventEncoder: Encoder[BakerEvent] = deriveEncoder[BakerEvent]
+
+  //Encoder for baker events.
+  //The structure of circe means you cannot encode a single value (CompiledRecipeId) into 2 json values (recipeId and recipeIdV2) automatically.
+  //Therefore we encode it as a single value first (recipeId) and then add the second value afterwards (recipeIdV2)
+  implicit val bakerEventEncoder : Encoder[BakerEvent] = Encoder.instance{ be : BakerEvent =>
+    // Encoder for recipeId (v1)
+    implicit val compiledRecipeIdV1Encoder : Encoder[BackwardsCompatibleRecipeId] = Encoder.encodeString.contramap(_.recipeIdV1)
+    // BakerEvent encoder which includes the recipeId (v1)
+    val bakerEventEncoderWithOldRecipeId : Encoder[BakerEvent] = deriveEncoder[BakerEvent]
+    // Retrieve the recipeIdV2 if filled.
+    val recipeIdV2 : Option[String] = be match {
+      case event : ContainsCompiledRecipeId => event.recipeId match {
+        case rid : BackwardsCompatibleRecipeId => Some(rid.recipeIdV2)
+        case _ => None
+      }
+      case _ => None
+    }
+    // Create an object with the recipeIdV2 value.
+    val recipeIdV2Object = recipeIdV2.map(riv2 => Json.obj("recipeIdV2" -> Json.fromString(riv2))).getOrElse(Json.obj())
+    // Merge the bakerEvent and the recipeIdV2 fields
+    be.asJson(bakerEventEncoderWithOldRecipeId).deepMerge(recipeIdV2Object)
+  }
+
   implicit val sensoryEventStatusEncoder: Encoder[SensoryEventStatus] = (s: SensoryEventStatus) => Encoder.encodeString.apply(s.toString)
   implicit val sensoryEventResultEncoder: Encoder[SensoryEventResult] = deriveEncoder[SensoryEventResult]
   implicit val bakerResultEncoder: Encoder[BakerResult] = deriveEncoder[BakerResult]

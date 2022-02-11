@@ -1,5 +1,6 @@
 package com.ing.baker.runtime.serialization.protomappings
 
+import com.ing.baker.il.CompiledRecipeId
 import com.ing.baker.runtime.akka.actor.{protobuf => proto}
 import com.ing.baker.runtime.scaladsl.RecipeEventMetadata
 import com.ing.baker.runtime.serialization.ProtoMap
@@ -12,12 +13,12 @@ class RecipeEventMetadataMapping extends ProtoMap[RecipeEventMetadata, proto.Rec
   val companion = proto.RecipeEventMetadata
 
   def toProto(a: RecipeEventMetadata): proto.RecipeEventMetadata = {
-    proto.RecipeEventMetadata(Some(a.recipeId), Some(a.recipeName), Some(a.recipeInstanceId))
+    proto.RecipeEventMetadata(a.recipeId.v1Value, a.recipeId.v2Value, Some(a.recipeName), Some(a.recipeInstanceId))
   }
 
   def fromProto(message: proto.RecipeEventMetadata): Try[RecipeEventMetadata] =
     for {
-      recipeId <- versioned(message.recipeId, "recipeId")
+      recipeId <- versioned(CompiledRecipeId.build(message.recipeId, message.recipeIdV2), "recipeId")
       recipeName <- versioned(message.recipeName, "recipeName")
       recipeInstanceId <- versioned(message.recipeInstanceId, "recipeInstanceId")
     } yield RecipeEventMetadata(recipeId, recipeName, recipeInstanceId)

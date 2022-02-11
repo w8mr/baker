@@ -3,12 +3,13 @@ package com.ing.baker.runtime.serialization.protomappings
 import java.util.concurrent.TimeUnit
 import cats.implicits._
 import com.ing.baker.il
-import com.ing.baker.il.CompiledRecipe.Scala212CompatibleJava
+import com.ing.baker.il.CompiledRecipeId
 import com.ing.baker.petrinet.api._
 import com.ing.baker.runtime.akka.actor.protobuf
 import com.ing.baker.runtime.serialization.ProtoMap.{ctxFromProto, ctxToProto, versioned}
 import com.ing.baker.il.petrinet.{Node, Place, RecipePetriNet, Transition}
 import com.ing.baker.petrinet.api.Marking
+import com.ing.baker.runtime.akka.actor.protobuf.CompiledRecipe
 import com.ing.baker.runtime.serialization.{ProtoMap, TokenIdentifier}
 import com.ing.baker.types.Value
 import scalax.collection.GraphEdge
@@ -21,7 +22,7 @@ import scala.util.{Failure, Success, Try}
 
 class CompiledRecipeMapping extends ProtoMap[il.CompiledRecipe, protobuf.CompiledRecipe] {
 
-  val companion = protobuf.CompiledRecipe
+  val companion: CompiledRecipe.type = protobuf.CompiledRecipe
 
   def toProto(recipe: il.CompiledRecipe): protobuf.CompiledRecipe = {
     val eventReceiveMillis = recipe.eventReceivePeriod.map(_.toMillis)
@@ -29,7 +30,8 @@ class CompiledRecipeMapping extends ProtoMap[il.CompiledRecipe, protobuf.Compile
     val graph = Some(protobuf.PetriNet(protoNodes(recipe), protoEdges(recipe)))
     protobuf.CompiledRecipe(
       Option(recipe.name),
-      Some(recipe.recipeId),
+      recipe.recipeId.v1Value,
+      recipe.recipeId.v2Value,
       graph,
       protoMarkings(recipe),
       recipe.validationErrors,
@@ -53,10 +55,10 @@ class CompiledRecipeMapping extends ProtoMap[il.CompiledRecipe, protobuf.Compile
           accumulated.add(place, value, count)
         case _ => throw new IllegalStateException("Missing data in persisted ProducedToken")
       })
-    } yield message.recipeId.map { recipeId =>
+    } yield CompiledRecipeId.build(message.recipeId, message.recipeIdV2).map { recipeId =>
       il.CompiledRecipe(name, recipeId, petriNet, initialMarking, message.validationErrors.toIndexedSeq, eventReceivePeriod, retentionPeriod)
     }.getOrElse {
-      il.CompiledRecipe.build(name, petriNet, initialMarking, message.validationErrors.toIndexedSeq, eventReceivePeriod, retentionPeriod, Scala212CompatibleJava)
+      il.CompiledRecipe.build(name, petriNet, initialMarking, message.validationErrors.toIndexedSeq, eventReceivePeriod, retentionPeriod)
     }
   }
 
@@ -218,8 +220,8 @@ class CompiledRecipeMapping extends ProtoMap[il.CompiledRecipe, protobuf.Compile
         from <- versioned(protoEdge.from, "from")
         to <- versioned(protoEdge.to, "to")
         weight <- versioned(protoEdge.weight, "weight")
-        fromNode <- tryNodes.map(_.apply(from.toInt))
-        toNode <- tryNodes.map(_.apply(to.toInt))
+        fromNode <- tryNodes.map(_.apply(from))
+        toNode <- tryNodes.map(_.apply(to))
         edge = il.petrinet.Edge(protoEdge.eventFilter)
       } yield WLDiEdge.apply(fromNode, toNode)(weight, edge)
     }

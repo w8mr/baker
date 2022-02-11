@@ -1,6 +1,6 @@
 package com.ing.baker.runtime.common
 
-import com.ing.baker.il.{CompiledRecipe, RecipeVisualStyle}
+import com.ing.baker.il.{CompiledRecipe, CompiledRecipeId, RecipeVisualStyle}
 import com.ing.baker.runtime.common.LanguageDataStructures.LanguageApi
 import com.ing.baker.types.Value
 
@@ -42,7 +42,8 @@ trait Baker[F[_]] extends LanguageApi {
     * @param compiledRecipe The compiled recipe.
     * @return A recipeId
     */
-  def addRecipe(compiledRecipe: CompiledRecipe, timeCreated: Long, validate: Boolean): F[String] = addRecipe(RecipeRecord.of(compiledRecipe, updated = timeCreated, validate = validate))
+  def addRecipe(compiledRecipe: CompiledRecipe, timeCreated: Long, validate: Boolean): F[CompiledRecipeId] =
+    addRecipe(RecipeRecord.of(compiledRecipe, updated = timeCreated, validate = validate))
 
   /**
     * Adds a recipe to baker and returns a recipeId for the recipe.
@@ -52,31 +53,32 @@ trait Baker[F[_]] extends LanguageApi {
     * @param compiledRecipe The compiled recipe.
     * @return A recipeId
     */
-  def addRecipe(compiledRecipe: CompiledRecipe, validate: Boolean): F[String] = addRecipe(compiledRecipe, System.currentTimeMillis(), validate)
+  def addRecipe(compiledRecipe: CompiledRecipe, validate: Boolean): F[CompiledRecipeId] =
+    addRecipe(compiledRecipe, System.currentTimeMillis(), validate)
 
   /**
     * Adds recipe as a record
-    * @param recipe
+    * @param recipe recipe record
     * @return
     */
-  def addRecipe(recipe: RecipeRecord): F[String]
+  def addRecipe(recipe: RecipeRecord): F[CompiledRecipeId]
 
   /**
     * Returns the recipe information for the given RecipeId
     *
-    * @param recipeId
+    * @param recipeId a compiled recipe id
     * @return
     */
-  def getRecipe(recipeId: String): F[RecipeInformationType]
+  def getRecipe(recipeId: CompiledRecipeId): F[RecipeInformationType]
 
-  def getRecipeVisual(recipeId: String, style: RecipeVisualStyle = RecipeVisualStyle.default): F[String]
+  def getRecipeVisual(recipeId: CompiledRecipeId, style: RecipeVisualStyle = RecipeVisualStyle.default): F[String]
 
   /**
     * Returns all recipes added to this baker instance.
     *
     * @return All recipes in the form of map of recipeId -> CompiledRecipe
     */
-  def getAllRecipes: F[language.Map[String, RecipeInformationType]]
+  def getAllRecipes: F[language.Map[CompiledRecipeId, RecipeInformationType]]
 
   def getAllInteractions: F[language.Seq[InteractionInstanceDescriptorType]]
 
@@ -89,7 +91,7 @@ trait Baker[F[_]] extends LanguageApi {
     * @param recipeInstanceId The identifier for the newly baked process
     * @return
     */
-  def bake(recipeId: String, recipeInstanceId: String): F[Unit]
+  def bake(recipeId: CompiledRecipeId, recipeInstanceId: String): F[Unit]
 
   /**
     * Notifies Baker that an event has happened and waits until the event was accepted but not executed by the process.
@@ -320,7 +322,7 @@ trait Baker[F[_]] extends LanguageApi {
     *
     * Note that the delivery guarantee is *AT MOST ONCE*. Do not use it for critical functionality
     *
-    * @param listenerFunction
+    * @param listenerFunction function to be called once a baker event happens
     * @return
     */
   def registerBakerEventListener(listenerFunction: language.ConsumerFunction[BakerEventType]): F[Unit]
@@ -355,13 +357,13 @@ trait Baker[F[_]] extends LanguageApi {
 }
 
 case class RecipeRecord(
-                         recipeId: String,
+                         recipeId: CompiledRecipeId,
                          name: String,
                          updated: Long,
                          recipe: CompiledRecipe,
                          validate: Boolean
                        )
 object RecipeRecord {
-  def of(recipe: CompiledRecipe, updated: Long = System.currentTimeMillis(), validate: Boolean = true) =
+  def of(recipe: CompiledRecipe, updated: Long = System.currentTimeMillis(), validate: Boolean = true): RecipeRecord =
     RecipeRecord(recipe.recipeId, recipe.name, updated, recipe, validate)
 }

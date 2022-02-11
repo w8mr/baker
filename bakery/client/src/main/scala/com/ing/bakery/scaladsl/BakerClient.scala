@@ -1,7 +1,7 @@
 package com.ing.bakery.scaladsl
 
 import cats.effect.{ContextShift, IO, Resource, Timer}
-import com.ing.baker.il.RecipeVisualStyle
+import com.ing.baker.il.{BackwardsCompatibleRecipeId, CompiledRecipeId, RecipeVisualStyle, SingleVersionRecipeId}
 import com.ing.baker.runtime.common.{BakerException, RecipeRecord, SensoryEventStatus, Utils}
 import com.ing.baker.runtime.scaladsl.{BakerEvent, BakerResult, EncodedRecipe, EventInstance, EventMoment, EventResolutions, InteractionInstanceDescriptor, RecipeEventMetadata, RecipeInformation, RecipeInstanceMetadata, RecipeInstanceState, SensoryEventResult, Baker => ScalaBaker}
 import com.ing.baker.runtime.serialization.JsonDecoders._
@@ -95,8 +95,8 @@ final class BakerClient( client: Client[IO],
   implicit val eventInstanceResultEntityEncoder: EntityEncoder[IO, EventInstance] = jsonEncoderOf[IO, EventInstance]
   implicit val recipeEncoder: EntityEncoder[IO, EncodedRecipe] = jsonEncoderOf[IO, EncodedRecipe]
 
-  override def addRecipe(recipe: RecipeRecord): Future[String] =
-    callRemoteBakerService[String]((host, prefix) => POST(
+  override def addRecipe(recipe: RecipeRecord): Future[CompiledRecipeId] =
+    callRemoteBakerService[CompiledRecipeId]((host, prefix) => POST(
       EncodedRecipe(
         base64 = new String(java.util.Base64.getEncoder.encode(Utils.recipeToByteArray(recipe.recipe)), "UTF-8"),
         createdAt = recipe.updated),
@@ -152,24 +152,42 @@ final class BakerClient( client: Client[IO],
   }
 
   /**
+    * Try V2 first, and fall back to V1 if it fails. If both fail, the failure of the V2 endpoint is returned.
+    */
+  private def fallBackToV1IfFailed[A](recipeId: CompiledRecipeId)(endpoint: String => Future[A]) : Future[A] = recipeId match {
+    case SingleVersionRecipeId(value) => endpoint(value)
+    case BackwardsCompatibleRecipeId(id1, id2) => fallBackToV1IfFailed(endpoint(id1), endpoint(id2))
+  }
+
+  private def fallBackToV1IfFailed[A](v1Endpoint: => Future[A], v2Endpoint: => Future[A]) : Future[A] =
+    v2Endpoint
+      .recoverWith { case exceptionFromFirstCall : Exception =>
+        // If it fails, try the second endpoint
+        v1Endpoint.recoverWith { case _ : Exception => Future.failed[A](exceptionFromFirstCall) }
+      }
+
+
+  /**
     * Returns the recipe information for the given RecipeId
     *
     * @param recipeId
     * @return
     */
-  override def getRecipe(recipeId: String): Future[RecipeInformation] =
-    callRemoteBakerService[RecipeInformation]((host, prefix) => GET(root(host, prefix) / "app" / "recipes" / recipeId))
+  override def getRecipe(recipeId: CompiledRecipeId): Future[RecipeInformation] =
+    fallBackToV1IfFailed(recipeId)(recipeIdString => callRemoteBakerService[RecipeInformation]((host, prefix) => GET(root(host, prefix) / "app" / "recipes" / recipeIdString)))
 
-  override def getRecipeVisual(recipeId: String, style: RecipeVisualStyle): Future[String] =
-    callRemoteBakerService[String]((host, prefix) => GET(root(host, prefix) / "app" / "recipes" / recipeId / "visual"))
+  override def getRecipeVisual(recipeId: CompiledRecipeId, style: RecipeVisualStyle): Future[String] =
+    fallBackToV1IfFailed(recipeId)(recipeIdString => callRemoteBakerService[String]((host, prefix) => GET(root(host, prefix) / "app" / "recipes" / recipeIdString / "visual")))
+
 
   /**
     * Returns all recipes added to this baker instance.
     *
     * @return All recipes in the form of map of recipeId -> CompiledRecipe
     */
-  override def getAllRecipes: Future[Map[String, RecipeInformation]] =
+  override def getAllRecipes: Future[Map[CompiledRecipeId, RecipeInformation]] =
     callRemoteBakerService[Map[String, RecipeInformation]]( (host, prefix) => GET(root(host, prefix) / "app" / "recipes"))
+      .map(_.map{ case (k, v) => (SingleVersionRecipeId(k), v) })
 
   /**
     * Creates a process instance for the given recipeId with the given RecipeInstanceId as identifier
@@ -178,11 +196,9 @@ final class BakerClient( client: Client[IO],
     * @param recipeInstanceId The identifier for the newly baked process
     * @return
     */
-  override def bake(recipeId: String, recipeInstanceId: String): Future[Unit] =
-    callRemoteBakerService[Unit]((host, prefix) => POST(root(host, prefix) / "instances" / recipeInstanceId / "bake" / recipeId)).map { _ =>
-      logger.info(s"Baked recipe instance '$recipeInstanceId' from recipe '$recipeId'")
-    }
-
+  override def bake(recipeId: CompiledRecipeId, recipeInstanceId: String): Future[Unit] =
+    fallBackToV1IfFailed(recipeId)(recipeIdString => callRemoteBakerService[Unit]((host, prefix) => POST(root(host, prefix) / "instances" / recipeInstanceId / "bake" / recipeIdString)))
+      .map(_ => logger.info(s"Baked recipe instance '$recipeInstanceId' from recipe '$recipeId'"))
 
   override def getInteraction(interactionName: String): Future[Option[InteractionInstanceDescriptor]] =
     callRemoteBakerService[Option[InteractionInstanceDescriptor]]((host, prefix) => GET(root(host, prefix) / "app" / "interactions" / interactionName))

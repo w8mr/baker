@@ -1,7 +1,8 @@
 package com.ing.baker.il.petrinet
 
 import com.ing.baker.il
-import com.ing.baker.il.{CompiledRecipe, EventDescriptor}
+import com.ing.baker.il.CompiledRecipeId.RecipeIdVariant
+import com.ing.baker.il.EventDescriptor
 
 /**
   * Transition providing data from an event.
@@ -13,6 +14,6 @@ case class EventTransition(event: EventDescriptor,
   override val label: String = event.name
   override val id: Long = il.sha256HashCode(s"EventTransition:$label")
 
-  override def toStringForRecipeId(recipeIdVariant: CompiledRecipe.RecipeIdVariant): String =
+  override def toStringForRecipeId(recipeIdVariant: RecipeIdVariant): String =
     s"EventTransition(${event.toStringForRecipeId(recipeIdVariant)},$isSensoryEvent,$maxFiringLimit)"
 }

@@ -5,7 +5,7 @@ import cats.effect.{ConcurrentEffect, Timer}
 import cats.implicits._
 import cats.~>
 import com.ing.baker.il.failurestrategy.ExceptionStrategyOutcome
-import com.ing.baker.il.{RecipeVisualStyle, RecipeVisualizer}
+import com.ing.baker.il.{CompiledRecipeId, RecipeVisualStyle, RecipeVisualizer}
 import com.ing.baker.runtime.common
 import com.ing.baker.runtime.common.LanguageDataStructures.ScalaApi
 import com.ing.baker.runtime.common.{RecipeRecord, SensoryEventStatus}
@@ -68,7 +68,7 @@ abstract class BakerF[F[_]](implicit components: BakerComponents[F], effect: Con
     * @param recipeRecord The RecipeRecord of the recipe
     * @return A recipeId
     */
-  override def addRecipe(recipeRecord: RecipeRecord): F[String] =
+  override def addRecipe(recipeRecord: RecipeRecord): F[CompiledRecipeId] =
     components
       .recipeManager
       .addRecipe(recipeRecord.recipe, !recipeRecord.validate || config.allowAddingRecipeWithoutRequiringInstances)
@@ -77,15 +77,15 @@ abstract class BakerF[F[_]](implicit components: BakerComponents[F], effect: Con
   /**
     * Returns the recipe information for the given RecipeId
     *
-    * @param recipeId
+    * @param recipeId compiled recipe id
     * @return
     */
-  override def getRecipe(recipeId: String): F[RecipeInformation] =
+  override def getRecipe(recipeId: CompiledRecipeId): F[RecipeInformation] =
     components.recipeManager.getRecipe(recipeId)
       .timeout(config.inquireTimeout)
 
 
-  override def getRecipeVisual(recipeId: String, style: RecipeVisualStyle): F[String] =
+  override def getRecipeVisual(recipeId: CompiledRecipeId, style: RecipeVisualStyle): F[String] =
     components.recipeManager.getRecipe(recipeId).map(recipe =>
       RecipeVisualizer.visualizeRecipe(recipe.compiledRecipe, style))
 
@@ -94,7 +94,7 @@ abstract class BakerF[F[_]](implicit components: BakerComponents[F], effect: Con
     *
     * @return All recipes in the form of map of recipeId -> CompiledRecipe
     */
-  override def getAllRecipes: F[Map[String, RecipeInformation]] =
+  override def getAllRecipes: F[Map[CompiledRecipeId, RecipeInformation]] =
     components.recipeManager.getAllRecipes
       .timeout(config.inquireTimeout)
 
@@ -122,7 +122,7 @@ abstract class BakerF[F[_]](implicit components: BakerComponents[F], effect: Con
     * @param recipeInstanceId The identifier for the newly baked process
     * @return
     */
-  override def bake(recipeId: String, recipeInstanceId: String): F[Unit] =
+  override def bake(recipeId: CompiledRecipeId, recipeInstanceId: String): F[Unit] =
     components.recipeInstanceManager.bake(recipeId, recipeInstanceId, config.recipeInstanceConfig)
       .timeout(config.bakeTimeout)
 
@@ -356,20 +356,20 @@ abstract class BakerF[F[_]](implicit components: BakerComponents[F], effect: Con
     new BakerF[G] {
       override val config: BakerF.Config =
         self.config
-      override def addRecipe(recipeRecord: RecipeRecord): G[String] =
+      override def addRecipe(recipeRecord: RecipeRecord): G[CompiledRecipeId] =
         mapK(self.addRecipe(recipeRecord))
-      override def getRecipe(recipeId: String): G[RecipeInformation] =
+      override def getRecipe(recipeId: CompiledRecipeId): G[RecipeInformation] =
         mapK(self.getRecipe(recipeId))
-      override def getRecipeVisual(recipeId: String, style: RecipeVisualStyle): G[String] =
+      override def getRecipeVisual(recipeId: CompiledRecipeId, style: RecipeVisualStyle): G[String] =
         mapK(self.getRecipeVisual(recipeId))
-      override def getAllRecipes: G[Map[String, RecipeInformation]] =
+      override def getAllRecipes: G[Map[CompiledRecipeId, RecipeInformation]] =
         mapK(self.getAllRecipes)
       override def getAllInteractions: G[Seq[InteractionInstanceDescriptor]] =
         mapK(self.getAllInteractions)
       override def getInteraction(interactionName: String): G[Option[InteractionInstanceDescriptor]] =
         mapK(self.getInteraction(interactionName))
 
-      override def bake(recipeId: String, recipeInstanceId: String): G[Unit] =
+      override def bake(recipeId: CompiledRecipeId, recipeInstanceId: String): G[Unit] =
         mapK(self.bake(recipeId, recipeInstanceId))
       override def fireEventAndResolveWhenReceived(recipeInstanceId: String, event: EventInstance, correlationId: Option[String]): G[SensoryEventStatus] =
         mapK(self.fireEventAndResolveWhenReceived(recipeInstanceId, event, correlationId))
@@ -409,19 +409,19 @@ abstract class BakerF[F[_]](implicit components: BakerComponents[F], effect: Con
 
   def asDeprecatedFutureImplementation(mapK: F ~> Future, comapK: Future ~> F): DeprecatedBaker =
     new DeprecatedBaker {
-      override def addRecipe(recipeRecord: RecipeRecord): Future[String] =
+      override def addRecipe(recipeRecord: RecipeRecord): Future[CompiledRecipeId] =
         mapK(self.addRecipe(recipeRecord))
-      override def getRecipe(recipeId: String): Future[RecipeInformation] =
+      override def getRecipe(recipeId: CompiledRecipeId): Future[RecipeInformation] =
         mapK(self.getRecipe(recipeId))
-      override def getRecipeVisual(recipeId: String, style: RecipeVisualStyle): Future[String] =
+      override def getRecipeVisual(recipeId: CompiledRecipeId, style: RecipeVisualStyle): Future[String] =
         mapK(self.getRecipeVisual(recipeId, style))
-      override def getAllRecipes: Future[Map[String, RecipeInformation]] =
+      override def getAllRecipes: Future[Map[CompiledRecipeId, RecipeInformation]] =
         mapK(self.getAllRecipes)
       override def getAllInteractions: Future[Seq[InteractionInstanceDescriptor]] =
         mapK(self.getAllInteractions)
       override def getInteraction(interactionName: String): Future[Option[InteractionInstanceDescriptor]] =
         mapK(self.getInteraction(interactionName))
-      override def bake(recipeId: String, recipeInstanceId: String): Future[Unit] =
+      override def bake(recipeId: CompiledRecipeId, recipeInstanceId: String): Future[Unit] =
         mapK(self.bake(recipeId, recipeInstanceId))
       override def fireEventAndResolveWhenReceived(recipeInstanceId: String, event: EventInstance, correlationId: Option[String]): Future[SensoryEventStatus] =
         mapK(self.fireEventAndResolveWhenReceived(recipeInstanceId, event, correlationId))

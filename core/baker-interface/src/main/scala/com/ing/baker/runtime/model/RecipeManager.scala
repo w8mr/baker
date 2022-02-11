@@ -2,7 +2,7 @@ package com.ing.baker.runtime.model
 
 import cats.effect.{Effect, Timer}
 import cats.implicits._
-import com.ing.baker.il.CompiledRecipe
+import com.ing.baker.il.{CompiledRecipe, CompiledRecipeId}
 import com.ing.baker.runtime.common.BakerException.{ImplementationsException, NoSuchRecipeException, RecipeValidationException}
 import com.ing.baker.runtime.common.RecipeRecord
 import com.ing.baker.runtime.scaladsl.{RecipeAdded, RecipeInformation}
@@ -14,11 +14,11 @@ trait RecipeManager[F[_]] extends LazyLogging {
 
   protected def store(compiledRecipe: CompiledRecipe, timestamp: Long): F[Unit]
 
-  protected def fetchAll: F[Map[String, RecipeRecord]]
+  protected def fetchAll: F[Map[CompiledRecipeId, RecipeRecord]]
 
-  protected def fetch(recipeId: String): F[Option[RecipeRecord]]
+  protected def fetch(recipeId: CompiledRecipeId): F[Option[RecipeRecord]]
 
-  def addRecipe(compiledRecipe: CompiledRecipe, suppressImplementationErrors: Boolean)(implicit components: BakerComponents[F], effect: Effect[F], timer: Timer[F]): F[String] =
+  def addRecipe(compiledRecipe: CompiledRecipe, suppressImplementationErrors: Boolean)(implicit components: BakerComponents[F], effect: Effect[F], timer: Timer[F]): F[CompiledRecipeId] =
     for {
       implementationErrors <-
         if (suppressImplementationErrors) effect.delay {
@@ -43,7 +43,7 @@ trait RecipeManager[F[_]] extends LazyLogging {
           } yield ()
     } yield compiledRecipe.recipeId
 
-  def getRecipe(recipeId: String)(implicit components: BakerComponents[F], effect: Effect[F]): F[RecipeInformation] =
+  def getRecipe(recipeId: CompiledRecipeId)(implicit components: BakerComponents[F], effect: Effect[F]): F[RecipeInformation] =
     fetch(recipeId).flatMap[RecipeInformation] {
       case Some(r: RecipeRecord) =>
         getImplementationErrors(r.recipe).map( errors =>
@@ -52,7 +52,7 @@ trait RecipeManager[F[_]] extends LazyLogging {
         effect.raiseError(NoSuchRecipeException(recipeId))
     }
 
-  def getAllRecipes(implicit components: BakerComponents[F], effect: Effect[F]): F[Map[String, RecipeInformation]] =
+  def getAllRecipes(implicit components: BakerComponents[F], effect: Effect[F]): F[Map[CompiledRecipeId, RecipeInformation]] =
     fetchAll.flatMap(_.toList
       .traverse { case (recipeId, r) =>
         getImplementationErrors(r.recipe)

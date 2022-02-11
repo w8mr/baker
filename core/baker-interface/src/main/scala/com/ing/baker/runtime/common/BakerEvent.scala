@@ -1,6 +1,6 @@
 package com.ing.baker.runtime.common
 
-import com.ing.baker.il.CompiledRecipe
+import com.ing.baker.il.{CompiledRecipe, CompiledRecipeId}
 import com.ing.baker.il.failurestrategy.ExceptionStrategyOutcome
 import com.ing.baker.runtime.common.LanguageDataStructures.LanguageApi
 
@@ -16,7 +16,7 @@ trait BakerEvent extends LanguageApi {
 trait EventReceived extends BakerEvent {
   val timeStamp: Long
   val recipeName: String
-  val recipeId: String
+  val recipeId: CompiledRecipeId
   val recipeInstanceId: String
   val correlationId: language.Option[String]
   val event: Event
@@ -40,7 +40,7 @@ trait InteractionFailed extends BakerEvent {
   val timeStamp: Long
   val duration: Long
   val recipeName: String
-  val recipeId: String
+  val recipeId: CompiledRecipeId
   val recipeInstanceId: String
   val interactionName: String
   val failureCount: Int
@@ -54,7 +54,7 @@ trait InteractionFailed extends BakerEvent {
 trait InteractionStarted extends BakerEvent {
   val timeStamp: Long
   val recipeName: String
-  val recipeId: String
+  val recipeId: CompiledRecipeId
   val recipeInstanceId: String
   val interactionName: String
 }
@@ -66,7 +66,7 @@ trait InteractionCompleted extends BakerEvent {
   val timeStamp: Long
   val duration: Long
   val recipeName: String
-  val recipeId: String
+  val recipeId: CompiledRecipeId
   val recipeInstanceId: String
   val interactionName: String
   val event: language.Option[Event]
@@ -77,7 +77,7 @@ trait InteractionCompleted extends BakerEvent {
   */
 trait RecipeInstanceCreated extends BakerEvent {
   val timeStamp: Long
-  val recipeId: String
+  val recipeId: CompiledRecipeId
   val recipeName: String
   val recipeInstanceId: String
 }
@@ -87,7 +87,7 @@ trait RecipeInstanceCreated extends BakerEvent {
   */
 trait RecipeAdded extends BakerEvent {
   val recipeName: String
-  val recipeId: String
+  val recipeId: CompiledRecipeId
   val date: Long
   val compiledRecipe: CompiledRecipe
 }

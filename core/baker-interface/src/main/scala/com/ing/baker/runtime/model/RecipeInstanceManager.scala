@@ -4,7 +4,7 @@ import cats.data.EitherT
 import cats.effect.concurrent.Deferred
 import cats.effect.{ConcurrentEffect, Effect, Resource, Timer}
 import cats.implicits._
-import com.ing.baker.il.{RecipeVisualStyle, RecipeVisualizer}
+import com.ing.baker.il.{CompiledRecipeId, RecipeVisualStyle, RecipeVisualizer}
 import com.ing.baker.runtime.common.BakerException.{ProcessAlreadyExistsException, ProcessDeletedException}
 import com.ing.baker.runtime.common.{BakerException, SensoryEventStatus}
 import com.ing.baker.runtime.model.RecipeInstanceManager.RecipeInstanceStatus
@@ -23,7 +23,7 @@ object RecipeInstanceManager {
 
     case class Active[F[_]](recipeInstance: RecipeInstance[F]) extends RecipeInstanceStatus[F]
 
-    case class Deleted[F[_]](recipeId: String, createdOn: Long, deletedOn: Long) extends RecipeInstanceStatus[F]
+    case class Deleted[F[_]](recipeId: CompiledRecipeId, createdOn: Long, deletedOn: Long) extends RecipeInstanceStatus[F]
   }
 }
 
@@ -52,7 +52,7 @@ trait RecipeInstanceManager[F[_]] {
       } yield ()
     }.compile.resource.drain
 
-  def bake(recipeId: String, recipeInstanceId: String, config: RecipeInstance.Config)(implicit components: BakerComponents[F], effect: Effect[F], timer: Timer[F]): F[Unit] =
+  def bake(recipeId: CompiledRecipeId, recipeInstanceId: String, config: RecipeInstance.Config)(implicit components: BakerComponents[F], effect: Effect[F], timer: Timer[F]): F[Unit] =
     for {
       _ <- fetch(recipeInstanceId).flatMap[Unit] {
         case Some(RecipeInstanceStatus.Active(_)) =>

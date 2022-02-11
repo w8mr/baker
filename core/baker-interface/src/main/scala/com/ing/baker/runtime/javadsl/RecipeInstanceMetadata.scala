@@ -1,16 +1,17 @@
 package com.ing.baker.runtime.javadsl
 
+import com.ing.baker.il.CompiledRecipeId
 import com.ing.baker.runtime.common.LanguageDataStructures.JavaApi
 import com.ing.baker.runtime.{common, scaladsl}
 
-case class RecipeInstanceMetadata(recipeId: String, recipeInstanceId: String, createdTime: Long) extends common.RecipeInstanceMetadata with JavaApi {
+case class RecipeInstanceMetadata(recipeId: CompiledRecipeId, recipeInstanceId: String, createdTime: Long) extends common.RecipeInstanceMetadata with JavaApi {
 
   /**
     * Returns the recipe id of the process.
     *
     * @return The recipe id of the process.
     */
-  def getRecipeId: String  = recipeId
+  def getRecipeId: CompiledRecipeId  = recipeId
 
   /**
     * Returns the process identifier.

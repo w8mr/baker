@@ -150,6 +150,7 @@ message EventMoment {
 
 message RecipeInstanceMetadata {
     optional string recipeId = 1;
+    optional string recipeIdV2 = 4;
     optional string recipeInstanceId = 2;
     optional int64 createdTime = 3;
 }
@@ -168,6 +169,7 @@ message SensoryEventResult {
 
 message RecipeEventMetadata {
     optional string recipeId = 1;
+    optional string recipeIdV2 = 4;
     optional string recipeName = 2;
     optional string recipeInstanceId = 3;
 }
@@ -201,6 +203,7 @@ message EventDescriptor {
 message CompiledRecipe {
     optional string name = 1;
     optional string recipeId = 7;
+    optional string recipeIdV2 = 8;
     optional PetriNet petrinet = 2;
     repeated ProducedToken initialMarking = 3;
     repeated string validationErrors = 4;
@@ -337,6 +340,7 @@ message EventReceivedBakerEvent {
     optional int64 timeStamp = 1;
     optional string recipeName = 2;
     optional string recipeId = 3;
+    optional string recipeIdV2 = 7;
     optional string recipeInstanceId = 4;
     optional string correlationId = 5;
     optional RuntimeEvent event = 6;
@@ -355,6 +359,7 @@ message InteractionFailedBakerEvent {
     optional int64 duration = 2;
     optional string recipeName = 3;
     optional string recipeId = 4;
+    optional string recipeIdV2 = 10;
     optional string recipeInstanceId = 5;
     optional string interactionName = 6;
     optional int32 failureCount = 7;
@@ -366,6 +371,7 @@ message InteractionStartedBakerEvent {
     optional int64 timeStamp = 1;
     optional string recipeName = 2;
     optional string recipeId = 3;
+    optional string recipeIdV2 = 6;
     optional string recipeInstanceId = 4;
     optional string interactionName = 5;
 }
@@ -375,6 +381,7 @@ message InteractionCompletedBakerEvent {
     optional int64 duration = 2;
     optional string recipeName = 3;
     optional string recipeId = 4;
+    optional string recipeIdV2 = 8;
     optional string recipeInstanceId = 5;
     optional string interactionName = 6;
     optional RuntimeEvent event = 7;
@@ -383,6 +390,7 @@ message InteractionCompletedBakerEvent {
 message RecipeInstanceCreatedBakerEvent {
     optional int64 timeStamp = 1;
     optional string recipeId = 2;
+    optional string recipeIdV2 = 5;
     optional string recipeName = 3;
     optional string recipeInstanceId = 4;
 }
@@ -390,6 +398,7 @@ message RecipeInstanceCreatedBakerEvent {
 message RecipeAddedBakerEvent {
     optional string recipeName = 1;
     optional string recipeId = 2;
+    optional string recipeIdV2 = 5;
     optional int64 date = 3;
     optional CompiledRecipe compiledRecipe = 4;
 }

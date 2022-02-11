@@ -42,7 +42,7 @@ case class BakerLogging(logger: Logger = BakerLogging.defaultLogger) {
     val msg = s"Added recipe '${recipe.name}'"
     val MDC = Map(
       "recipeName" -> recipe.name,
-      "recipeId" -> recipe.recipeId,
+      "recipeId" -> recipe.recipeId.toString,
       "addedOn" -> timestamp.toString
     )
     withMDC(MDC, _.info(msg))
@@ -54,7 +54,7 @@ case class BakerLogging(logger: Logger = BakerLogging.defaultLogger) {
       "recipeInstanceId" -> recipeInstanceId,
       "createdOn" -> createdOn.toString,
       "recipeName" -> recipe.name,
-      "recipeId" -> recipe.recipeId
+      "recipeId" -> recipe.recipeId.toString
     )
     withMDC(MDC, _.info(msg))
   }

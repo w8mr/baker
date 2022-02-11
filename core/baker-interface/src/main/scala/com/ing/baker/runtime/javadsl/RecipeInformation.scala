@@ -1,6 +1,6 @@
 package com.ing.baker.runtime.javadsl
 
-import com.ing.baker.il.CompiledRecipe
+import com.ing.baker.il.{CompiledRecipe, CompiledRecipeId}
 import com.ing.baker.runtime.common.LanguageDataStructures.JavaApi
 import com.ing.baker.runtime.{common, scaladsl}
 
@@ -11,7 +11,7 @@ case class RecipeInformation(compiledRecipe: CompiledRecipe,
                              errors: java.util.Set[String],
                              validate: Boolean) extends common.RecipeInformation with JavaApi {
 
-  def getRecipeId: String = compiledRecipe.recipeId
+  def getRecipeId: CompiledRecipeId = compiledRecipe.recipeId
 
   def getCompiledRecipe: CompiledRecipe = compiledRecipe
 

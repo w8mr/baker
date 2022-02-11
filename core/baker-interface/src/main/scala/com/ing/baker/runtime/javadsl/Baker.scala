@@ -4,14 +4,13 @@ import java.util
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import java.util.function.{BiConsumer, Consumer}
-
-import com.ing.baker.il.{CompiledRecipe, RecipeVisualStyle}
+import com.ing.baker.il.{CompiledRecipe, CompiledRecipeId, RecipeVisualStyle}
 import com.ing.baker.runtime.common.LanguageDataStructures.JavaApi
 import com.ing.baker.runtime.common.{RecipeRecord, SensoryEventStatus}
 import com.ing.baker.runtime.{common, scaladsl}
 import com.ing.baker.types.Value
-import javax.annotation.Nonnull
 
+import javax.annotation.Nonnull
 import scala.collection.JavaConverters._
 import scala.compat.java8.FutureConverters
 import scala.concurrent.{Await, Future}
@@ -54,7 +53,7 @@ class Baker(private val baker: scaladsl.Baker) extends common.Baker[CompletableF
     * @param recipeRecord The RecipeRecord recipe.
     * @return A recipe identifier.
     */
-  def addRecipe(@Nonnull recipeRecord: RecipeRecord): CompletableFuture[String] =
+  def addRecipe(@Nonnull recipeRecord: RecipeRecord): CompletableFuture[CompiledRecipeId] =
     toCompletableFuture(baker.addRecipe(recipeRecord))
 
 
@@ -66,7 +65,8 @@ class Baker(private val baker: scaladsl.Baker) extends common.Baker[CompletableF
     * @param compiledRecipe The compiled recipe.
     * @return A recipeId
     */
-  override def addRecipe(compiledRecipe: CompiledRecipe, timeCreated: Long, validate: Boolean): CompletableFuture[String] = addRecipe(RecipeRecord.of(compiledRecipe, updated = timeCreated, validate = validate))
+  override def addRecipe(compiledRecipe: CompiledRecipe, timeCreated: Long, validate: Boolean): CompletableFuture[CompiledRecipeId] =
+    addRecipe(RecipeRecord.of(compiledRecipe, updated = timeCreated, validate = validate))
 
   /**
     * Adds a recipe to baker and returns a recipeId for the recipe.
@@ -76,7 +76,8 @@ class Baker(private val baker: scaladsl.Baker) extends common.Baker[CompletableF
     * @param compiledRecipe The compiled recipe.
     * @return A recipeId
     */
-  override def addRecipe(compiledRecipe: CompiledRecipe, validate: Boolean): CompletableFuture[String] = addRecipe(compiledRecipe, System.currentTimeMillis(), validate)
+  override def addRecipe(compiledRecipe: CompiledRecipe, validate: Boolean): CompletableFuture[CompiledRecipeId] =
+    addRecipe(compiledRecipe, System.currentTimeMillis(), validate)
 
   /**
     * Attempts to gracefully shutdown the baker system.
@@ -90,7 +91,7 @@ class Baker(private val baker: scaladsl.Baker) extends common.Baker[CompletableF
     * @param recipeId  The recipe this instance will be baked for
     * @param recipeInstanceId The process identifier
     */
-  def bake(@Nonnull recipeId: String, @Nonnull recipeInstanceId: String): CompletableFuture[Unit] =
+  def bake(@Nonnull recipeId: CompiledRecipeId, @Nonnull recipeInstanceId: String): CompletableFuture[Unit] =
     toCompletableFuture(baker.bake(recipeId, recipeInstanceId))
 
 
@@ -225,19 +226,19 @@ class Baker(private val baker: scaladsl.Baker) extends common.Baker[CompletableF
     * @param recipeId the recipeId
     * @return The JRecipeInformation recipe
     */
-  def getRecipe(@Nonnull recipeId: String): CompletableFuture[RecipeInformation] =
+  def getRecipe(@Nonnull recipeId: CompiledRecipeId): CompletableFuture[RecipeInformation] =
     toCompletableFuture(baker.getRecipe(recipeId)).thenApply(_.asJava)
 
 
-  def getRecipeVisual(recipeId: String, style: RecipeVisualStyle): CompletableFuture[String] =
-    toCompletableFuture(baker.getRecipeVisual(recipeId))
+  def getRecipeVisual(recipeId: CompiledRecipeId, style: RecipeVisualStyle): CompletableFuture[String] =
+    toCompletableFuture(baker.getRecipeVisual(recipeId, style))
 
   /**
     * Return alls recipes added to this Baker
     *
     * @return A map with all recipes from recipeId -> JRecipeInformation
     */
-  def getAllRecipes: CompletableFuture[java.util.Map[String, RecipeInformation]] =
+  def getAllRecipes: CompletableFuture[java.util.Map[CompiledRecipeId, RecipeInformation]] =
     FutureConverters.toJava(baker.getAllRecipes).toCompletableFuture.thenApply(_.view.map { case (key, value) => (key, value.asJava)}.toMap.asJava)
 
 
@@ -337,7 +338,7 @@ class Baker(private val baker: scaladsl.Baker) extends common.Baker[CompletableF
   /**
     * Registers a listener that listens to all Baker events
     *
-    * @param listenerFunction
+    * @param listenerFunction a consumer to be called once an event occurs.
     * @return
     */
   override def registerBakerEventListener(@Nonnull listenerFunction: Consumer[BakerEvent]): CompletableFuture[Unit] =

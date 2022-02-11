@@ -1,6 +1,7 @@
 package com.ing.baker.runtime.serialization.protomappings
 
 import cats.implicits._
+import com.ing.baker.il.CompiledRecipeId
 import com.ing.baker.il.failurestrategy.ExceptionStrategyOutcome
 import com.ing.baker.runtime.akka.actor.protobuf
 import com.ing.baker.runtime.common.RejectReason
@@ -50,7 +51,8 @@ object BakerEventMapping {
       protobuf.EventReceivedBakerEvent(
         timeStamp = Some(a.timeStamp),
         recipeName = Some(a.recipeName),
-        recipeId = Some(a.recipeId),
+        recipeId = a.recipeId.v1Value,
+        recipeIdV2 = a.recipeId.v2Value,
         recipeInstanceId = Some(a.recipeInstanceId),
         correlationId = a.correlationId,
         event = Some(ctxToProto(a.event))
@@ -60,7 +62,7 @@ object BakerEventMapping {
       for {
         timeStamp <- versioned(message.timeStamp, "timeStamp")
         recipeName <- versioned(message.recipeName, "recipeName")
-        recipeId <- versioned(message.recipeId, "recipeId")
+        recipeId <- versioned(CompiledRecipeId.build(message.recipeId, message.recipeIdV2), "recipeId")
         recipeInstanceId <- versioned(message.recipeInstanceId, "recipeInstanceId")
         correlationId = message.correlationId
         eventProto <- versioned(message.event, "event")
@@ -130,11 +132,12 @@ object BakerEventMapping {
         timeStamp = Some(a.timeStamp),
         duration = Some(a.duration),
         recipeName = Some(a.recipeName),
-        recipeId = Some(a.recipeId),
+        recipeId = a.recipeId.v1Value,
+        recipeIdV2 = a.recipeId.v2Value,
         recipeInstanceId = Some(a.recipeInstanceId),
         interactionName = Some(a.interactionName),
         failureCount = Some(a.failureCount),
-        throwable = Some(a.throwable.getMessage + "\n\n" + a.throwable.getStackTrace.toString),
+        throwable = Some(a.throwable.getMessage + "\n\n" + a.throwable.getStackTrace.mkString("Array(", ", ", ")")),
         exceptionStrategyOutcome = Some(a.exceptionStrategyOutcome match {
           case ExceptionStrategyOutcome.BlockTransition => protobuf.ExceptionStrategyOutcome(eventName = None, delay = None)
           case ExceptionStrategyOutcome.Continue(eventName) => protobuf.ExceptionStrategyOutcome(eventName = Some(eventName), delay = None)
@@ -147,7 +150,7 @@ object BakerEventMapping {
         timeStamp <- versioned(message.timeStamp, "timeStamp")
         duration <- versioned(message.duration, "duration")
         recipeName <- versioned(message.recipeName, "recipeName")
-        recipeId <- versioned(message.recipeId, "recipeId")
+        recipeId <- versioned(CompiledRecipeId.build(message.recipeId, message.recipeIdV2), "recipeId")
         recipeInstanceId <- versioned(message.recipeInstanceId, "recipeInstanceId")
         interactionName <- versioned(message.interactionName, "interactionName")
         failureCount <- versioned(message.failureCount, "failureCount")
@@ -178,7 +181,8 @@ object BakerEventMapping {
       protobuf.InteractionStartedBakerEvent(
         timeStamp = Some(a.timeStamp),
         recipeName = Some(a.recipeName),
-        recipeId = Some(a.recipeId),
+        recipeId = a.recipeId.v1Value,
+        recipeIdV2 = a.recipeId.v2Value,
         recipeInstanceId = Some(a.recipeInstanceId),
         interactionName = Some(a.interactionName)
       )
@@ -187,7 +191,7 @@ object BakerEventMapping {
       for {
         timeStamp <- versioned(message.timeStamp, "timeStamp")
         recipeName <- versioned(message.recipeName, "recipeName")
-        recipeId <- versioned(message.recipeId, "recipeId")
+        recipeId <- versioned(CompiledRecipeId.build(message.recipeId, message.recipeIdV2), "recipeId")
         recipeInstanceId <- versioned(message.recipeInstanceId, "recipeInstanceId")
         interactionName <- versioned(message.interactionName, "interactionName")
       } yield InteractionStarted(
@@ -208,7 +212,8 @@ object BakerEventMapping {
         timeStamp = Some(a.timeStamp),
         duration = Some(a.duration),
         recipeName = Some(a.recipeName),
-        recipeId = Some(a.recipeId),
+        recipeId = a.recipeId.v1Value,
+        recipeIdV2 = a.recipeId.v2Value,
         recipeInstanceId = Some(a.recipeInstanceId),
         interactionName = Some(a.interactionName),
         event = a.event.map(ctxToProto(_))
@@ -219,7 +224,7 @@ object BakerEventMapping {
         timeStamp <- versioned(message.timeStamp, "timeStamp")
         duration <- versioned(message.duration, "duration")
         recipeName <- versioned(message.recipeName, "recipeName")
-        recipeId <- versioned(message.recipeId, "recipeId")
+        recipeId <- versioned(CompiledRecipeId.build(message.recipeId, message.recipeIdV2), "recipeId")
         recipeInstanceId <- versioned(message.recipeInstanceId, "recipeInstanceId")
         interactionName <- versioned(message.interactionName, "interactionName")
         event <- message.event.traverse(ctxFromProto(_))
@@ -242,7 +247,8 @@ object BakerEventMapping {
       protobuf.RecipeInstanceCreatedBakerEvent(
         timeStamp = Some(a.timeStamp),
         recipeName = Some(a.recipeName),
-        recipeId = Some(a.recipeId),
+        recipeId = a.recipeId.v1Value,
+        recipeIdV2 = a.recipeId.v2Value,
         recipeInstanceId = Some(a.recipeInstanceId)
       )
 
@@ -250,7 +256,7 @@ object BakerEventMapping {
       for {
         timeStamp <- versioned(message.timeStamp, "timeStamp")
         recipeName <- versioned(message.recipeName, "recipeName")
-        recipeId <- versioned(message.recipeId, "recipeId")
+        recipeId <- versioned(CompiledRecipeId.build(message.recipeId, message.recipeIdV2), "recipeId")
         recipeInstanceId <- versioned(message.recipeInstanceId, "recipeInstanceId")
       } yield RecipeInstanceCreated(
         timeStamp = timeStamp,
@@ -269,7 +275,8 @@ object BakerEventMapping {
         protobuf.RecipeAddedBakerEvent(
           date = Some(a.date),
           recipeName = Some(a.recipeName),
-          recipeId = Some(a.recipeId),
+          recipeId = a.recipeId.v1Value,
+          recipeIdV2 = a.recipeId.v2Value,
           compiledRecipe = Some(ctxToProto(a.compiledRecipe))
         )
 
@@ -277,7 +284,7 @@ object BakerEventMapping {
         for {
           date <- versioned(message.date, "date")
           recipeName <- versioned(message.recipeName, "recipeName")
-          recipeId <- versioned(message.recipeId, "recipeId")
+          recipeId <- versioned(CompiledRecipeId.build(message.recipeId, message.recipeIdV2), "recipeId")
           compiledRecipeProto <- versioned(message.compiledRecipe, "compiledRecipe")
           compiledRecipe <- ctxFromProto(compiledRecipeProto)
         } yield RecipeAdded(
