@@ -85,8 +85,12 @@ object JsonEncoders {
   //The structure of circe means you cannot encode a single value (CompiledRecipeId) into 2 json values (recipeId and recipeIdV2) automatically.
   //Therefore we encode it as a single value first (recipeId) and then add the second value afterwards (recipeIdV2)
   implicit val bakerEventEncoder : Encoder[BakerEvent] = Encoder.instance{ be : BakerEvent =>
-    // Encoder for recipeId (v1)
-    implicit val compiledRecipeIdV1Encoder : Encoder[BackwardsCompatibleRecipeId] = Encoder.encodeString.contramap(_.recipeIdV1)
+    implicit val recipeIdEncoder : Encoder[CompiledRecipeId] = {
+      // Only encode recipeIdV1, so the other version can be added later
+      case BackwardsCompatibleRecipeId(recipeIdV1, _) => Json.fromString(recipeIdV1)
+      case SingleVersionRecipeId(value) => Json.fromString(value)
+    }
+
     // BakerEvent encoder which includes the recipeId (v1)
     val bakerEventEncoderWithOldRecipeId : Encoder[BakerEvent] = deriveEncoder[BakerEvent]
     // Retrieve the recipeIdV2 if filled.

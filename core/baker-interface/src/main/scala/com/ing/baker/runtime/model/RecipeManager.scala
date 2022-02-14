@@ -49,7 +49,7 @@ trait RecipeManager[F[_]] extends LazyLogging {
         getImplementationErrors(r.recipe).map( errors =>
           RecipeInformation(r.recipe, r.updated, errors, r.validate))
       case None =>
-        effect.raiseError(NoSuchRecipeException(recipeId))
+        effect.raiseError(NoSuchRecipeException(recipeId.toString))
     }
 
   def getAllRecipes(implicit components: BakerComponents[F], effect: Effect[F]): F[Map[CompiledRecipeId, RecipeInformation]] =
