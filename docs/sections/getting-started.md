@@ -6,12 +6,14 @@ Baker is released to [maven central](https://search.maven.org/search?q=com.ing.b
 
 You can add following dependencies to your `maven` or `sbt` project to start using it:
 
+Baker is available both for Scala 2.12 and 2.13.
+
 === "Sbt"
 
 ```scala 
-dependencies += "com.ing.baker" %% "baker-recipe-dsl" % "3.0.0"
-dependencies += "com.ing.baker" %% "baker-compiler" % "3.0.0"
-dependencies += "com.ing.baker" %% "baker-runtime" % "3.0.0"
+dependencies += "com.ing.baker" %% "baker-recipe-dsl" % "3.5.0"
+dependencies += "com.ing.baker" %% "baker-compiler" % "3.5.0"
+dependencies += "com.ing.baker" %% "baker-runtime" % "3.5.0"
 ```
 
 === "Maven"
@@ -19,18 +21,18 @@ dependencies += "com.ing.baker" %% "baker-runtime" % "3.0.0"
 ```xml 
 <dependency>
    <groupId>com.ing.baker</groupId>
-   <artifactId>baker-recipe-dsl_2.12</artifactId>
-   <version>3.0.0</version>
+   <artifactId>baker-recipe-dsl_2.13</artifactId>
+   <version>3.5.0</version>
 </dependency>
 <dependency>
    <groupId>com.ing.baker</groupId>
-   <artifactId>baker-compiler_2.12</artifactId>
-   <version>3.0.0</version>
+   <artifactId>baker-compiler_2.13</artifactId>
+   <version>3.5.0</version>
 </dependency>
 <dependency>
    <groupId>com.ing.baker</groupId>
-   <artifactId>baker-runtime_2.12</artifactId>
-   <version>3.0.0</version>
+   <artifactId>baker-runtime_2.13</artifactId>
+   <version>3.5.0</version>
 </dependency>
 
 ```
